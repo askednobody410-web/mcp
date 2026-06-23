@@ -16,6 +16,7 @@ import {
   Channel
 } from 'discord.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import express from 'express'; // Add this import
 
 // ============================================
 // Initialization
@@ -877,7 +878,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     case 'ping':
       await command.reply({
         content: `Pong! ${Math.round(client.ws.ping)}ms`,
-        ephemeral: true,
+        flags: ['Ephemeral'], // Fixed deprecation warning
       });
       break;
       
@@ -918,7 +919,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         .setFooter({ text: 'Add/remove commands in .env COMMANDS variable' })
         .setTimestamp();
       
-      await command.reply({ embeds: [helpEmbed], ephemeral: true });
+      await command.reply({ embeds: [helpEmbed], flags: ['Ephemeral'] });
       break;
     }
     
@@ -927,7 +928,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
       clearConversation(key);
       await command.reply({
         content: command.guild ? 'Channel history cleared.' : 'Your history cleared.',
-        ephemeral: true,
+        flags: ['Ephemeral'],
       });
       break;
     }
@@ -935,76 +936,4 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     case 'stats': {
       const key = command.guild ? `channel:${command.channelId}` : `dm:${command.user.id}`;
       const conversation = getConversation(key);
-      await command.reply({
-        content: `This ${command.guild ? 'channel' : 'conversation'} has ${conversation.messages.length} messages in history.`,
-        ephemeral: true,
-      });
-      break;
-    }
-  }
-});
-
-// ============================================
-// Register Slash Commands
-// ============================================
-
-async function registerCommands() {
-  const guildId = process.env.GUILD_ID;
-  if (!guildId) {
-    console.log('No GUILD_ID set, skipping slash command registration');
-    return;
-  }
-  
-  try {
-    const guild = await client.guilds.fetch(guildId);
-    await guild.commands.set([
-      {
-        name: 'ping',
-        description: 'Check bot latency',
-      },
-      {
-        name: 'forget',
-        description: 'Clear conversation history',
-      },
-      {
-        name: 'stats',
-        description: 'View conversation stats',
-      },
-      {
-        name: 'help',
-        description: 'Show available commands',
-      },
-    ]);
-    console.log('Registered slash commands');
-  } catch (error) {
-    console.error('Failed to register commands:', error);
-  }
-}
-
-// ============================================
-// Start Bot
-// ============================================
-
-client.once('ready', () => {
-  console.log(`Bot online: ${client.user?.tag}`);
-  console.log(`Servers: ${client.guilds.cache.size}`);
-  console.log(`AI Model: ${modelName}`);
-  console.log(`Loaded ${CONFIG.commands.length} commands from .env`);
-  console.log('Natural language parsing enabled');
-  registerCommands();
-});
-
-client.login(process.env.DISCORD_TOKEN);
-
-// ============================================
-// Error Handling
-// ============================================
-
-process.on('unhandledRejection', console.error);
-process.on('uncaughtException', console.error);
-
-process.on('SIGINT', () => {
-  console.log('Shutting down...');
-  client.destroy();
-  process.exit(0);
-});
+      await command.reply
