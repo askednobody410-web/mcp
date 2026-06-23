@@ -1,0 +1,19 @@
+{
+  "name": "mcp-discord-bot",
+  "version": "2.0.0",
+  "scripts": {
+    "dev": "ts-node-dev src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "@google/generative-ai": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.3.3",
+    "ts-node-dev": "^2.0.0"
+  }
+}
