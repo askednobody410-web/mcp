@@ -966,7 +966,7 @@ async function registerCommands() {
 // HTTP Server for Render Free Tier
 // ============================================
 
-const PORT = process.env.PORT || 10000;
+const PORT = parseInt(process.env.PORT || '10000', 10);
 
 const app = express();
 
@@ -977,8 +977,6 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
-
-const PORT = parseInt(process.env.PORT || '10000', 10);
 
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`HTTP server running on port ${PORT}`);
