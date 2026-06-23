@@ -16,7 +16,7 @@ import {
   Channel
 } from 'discord.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import express from 'express'; // Add this import
+import express from 'express';
 
 // ============================================
 // Initialization
@@ -215,10 +215,8 @@ function resolveChannelFromMention(input: string, guild: Guild): TextChannel | n
 }
 
 function resolveChannelByNameOrMention(input: string, guild: Guild): TextChannel | null {
-  // Remove any extra words like "channel", "to", "the"
   const clean = input.replace(/\b(channel|to|the|from)\b/g, '').trim();
   
-  // Check if it's a mention
   const match = clean.match(/<#(\d+)>/);
   if (match) {
     const channelId = match[1];
@@ -226,7 +224,6 @@ function resolveChannelByNameOrMention(input: string, guild: Guild): TextChannel
     return channel?.type === ChannelType.GuildText ? channel as TextChannel : null;
   }
   
-  // Try to find by name (exact or partial match)
   const lowerClean = clean.toLowerCase();
   return guild.channels.cache.find(c => 
     c.type === ChannelType.GuildText && 
@@ -250,7 +247,6 @@ function resolveUserFromMention(input: string, guild: Guild): GuildMember | null
 function parseNaturalLanguage(content: string, guild?: Guild): { command: string; args: string[]; extracted: any } | null {
   const clean = content.toLowerCase().trim();
   
-  // ===== RENAME: "rename xyz channel to zyx" =====
   const renameMatch = content.match(/rename\s+(?:the\s+)?(?:channel\s+)?([a-zA-Z0-9\-_#]+)\s+(?:channel\s+)?(?:to\s+)?([a-zA-Z0-9\-_]+)/i);
   if (renameMatch) {
     const oldName = renameMatch[1].replace(/[<#>]/g, '');
@@ -262,7 +258,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== CREATE: "create 5 channels" =====
   const createMatch = content.match(/create\s+(\d+)\s+channels?\s*(?:named?\s+([a-zA-Z0-9\-_]+))?/i);
   if (createMatch) {
     const count = createMatch[1];
@@ -274,7 +269,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== KICK: "kick @user" =====
   const kickMatch = content.match(/kick\s+<@!?(\d+)>/i);
   if (kickMatch) {
     const userId = kickMatch[1];
@@ -286,7 +280,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== BAN: "ban @user" =====
   const banMatch = content.match(/ban\s+<@!?(\d+)>/i);
   if (banMatch) {
     const userId = banMatch[1];
@@ -298,7 +291,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== TIMEOUT: "timeout @user 5 minutes" =====
   const timeoutMatch = content.match(/timeout\s+<@!?(\d+)>\s*(\d+)\s*(?:minutes?)?/i);
   if (timeoutMatch) {
     const userId = timeoutMatch[1];
@@ -311,7 +303,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== MUTE: "mute @user" =====
   const muteMatch = content.match(/mute\s+<@!?(\d+)>/i);
   if (muteMatch) {
     const userId = muteMatch[1];
@@ -323,7 +314,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== UNMUTE: "unmute @user" =====
   const unmuteMatch = content.match(/unmute\s+<@!?(\d+)>/i);
   if (unmuteMatch) {
     const userId = unmuteMatch[1];
@@ -334,7 +324,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== CLEAR: "clear 50" =====
   const clearMatch = content.match(/clear\s*(\d+)/i);
   if (clearMatch) {
     const count = clearMatch[1];
@@ -345,7 +334,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== DELETE: "delete #channel" =====
   const deleteMatch = content.match(/delete\s+<#(\d+)>/i);
   if (deleteMatch) {
     const channelId = deleteMatch[1];
@@ -356,7 +344,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== LOCK: "lock #channel" =====
   const lockMatch = content.match(/lock\s+<#(\d+)>/i);
   if (lockMatch) {
     const channelId = lockMatch[1];
@@ -367,7 +354,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== UNLOCK: "unlock #channel" =====
   const unlockMatch = content.match(/unlock\s+<#(\d+)>/i);
   if (unlockMatch) {
     const channelId = unlockMatch[1];
@@ -378,7 +364,6 @@ function parseNaturalLanguage(content: string, guild?: Guild): { command: string
     };
   }
   
-  // ===== SLOWMODE: "slowmode #channel 5" =====
   const slowmodeMatch = content.match(/slowmode\s+<#(\d+)>\s*(\d+)/i);
   if (slowmodeMatch) {
     const channelId = slowmodeMatch[1];
@@ -593,10 +578,8 @@ async function handleRename(message: Message, args: string[]): Promise<string> {
   
   if (args.length < 2) return 'Usage: rename channel-name new-name';
   
-  // Find channel by name or mention
   let channel = resolveChannelByNameOrMention(args[0], message.guild);
   
-  // If not found, try to find by partial match
   if (!channel) {
     const searchTerm = args[0].toLowerCase();
     channel = message.guild.channels.cache.find(c => 
@@ -820,10 +803,8 @@ client.on('messageCreate', async (message: Message) => {
   }
 
   try {
-    // 1. Try natural language parsing FIRST (more flexible)
     let parsed = parseNaturalLanguage(content, message.guild || undefined);
     
-    // 2. If no natural language match, try exact command match
     if (!parsed) {
       const exact = parseDirectCommand(content);
       if (exact) {
@@ -838,7 +819,6 @@ client.on('messageCreate', async (message: Message) => {
       return;
     }
     
-    // If not a command, use AI
     try {
       const channel = message.channel;
       if (channel && typeof channel === 'object' && 'sendTyping' in channel && typeof channel.sendTyping === 'function') {
@@ -878,7 +858,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     case 'ping':
       await command.reply({
         content: `Pong! ${Math.round(client.ws.ping)}ms`,
-        flags: ['Ephemeral'], // Fixed deprecation warning
+        flags: ['Ephemeral'],
       });
       break;
       
@@ -936,4 +916,102 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     case 'stats': {
       const key = command.guild ? `channel:${command.channelId}` : `dm:${command.user.id}`;
       const conversation = getConversation(key);
-      await command.reply
+      await command.reply({
+        content: `This ${command.guild ? 'channel' : 'conversation'} has ${conversation.messages.length} messages in history.`,
+        flags: ['Ephemeral'],
+      });
+      break;
+    }
+  }
+});
+
+// ============================================
+// Register Slash Commands
+// ============================================
+
+async function registerCommands() {
+  const guildId = process.env.GUILD_ID;
+  if (!guildId) {
+    console.log('No GUILD_ID set, skipping slash command registration');
+    return;
+  }
+  
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    await guild.commands.set([
+      {
+        name: 'ping',
+        description: 'Check bot latency',
+      },
+      {
+        name: 'forget',
+        description: 'Clear conversation history',
+      },
+      {
+        name: 'stats',
+        description: 'View conversation stats',
+      },
+      {
+        name: 'help',
+        description: 'Show available commands',
+      },
+    ]);
+    console.log('Registered slash commands');
+  } catch (error) {
+    console.error('Failed to register commands:', error);
+  }
+}
+
+// ============================================
+// HTTP Server for Render Free Tier
+// ============================================
+
+const PORT = process.env.PORT || 10000;
+
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Discord Bot is running');
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`HTTP server running on port ${PORT}`);
+});
+
+setInterval(() => {
+  console.log(`Bot heartbeat - ${new Date().toISOString()}`);
+}, 300000);
+
+// ============================================
+// Start Bot
+// ============================================
+
+client.once('ready', () => {
+  console.log(`Bot online: ${client.user?.tag}`);
+  console.log(`Servers: ${client.guilds.cache.size}`);
+  console.log(`AI Model: ${modelName}`);
+  console.log(`Loaded ${CONFIG.commands.length} commands from .env`);
+  console.log('Natural language parsing enabled');
+  registerCommands();
+});
+
+client.login(process.env.DISCORD_TOKEN);
+
+// ============================================
+// Error Handling
+// ============================================
+
+process.on('unhandledRejection', console.error);
+process.on('uncaughtException', console.error);
+
+process.on('SIGINT', () => {
+  console.log('Shutting down...');
+  client.destroy();
+  server.close(() => {
+    process.exit(0);
+  });
+});
